@@ -1,10 +1,15 @@
 CC = gcc
 DEFINE = -DVERBOSE
-CFLAGS = -Wall $(DEFINE)
+CFLAGS = -Wall $(DEFINE) -g
 ANN_OBJ = annetwork.o real_num.o
 
+num: num_learn.o $(ANN_OBJ)
+	gcc $(CFLAGS) num_learn.o $(ANN_OBJ) -o num -lm
+
 xor: xor_learn.o $(ANN_OBJ)
-	gcc -g $(CFLAGS) xor_learn.o $(ANN_OBJ) -o xor -lm
+	gcc $(CFLAGS) xor_learn.o $(ANN_OBJ) -o xor -lm
+
+num_learn.o: annetwork.h real_num.h
 
 xor_learn.o: annetwork.h real_num.h
 
