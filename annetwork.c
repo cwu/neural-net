@@ -6,15 +6,14 @@
 #include <assert.h>
 #include "annetwork.h"
 
-#define malloc_nfail(ptr,size)		do{\
-										ptr = malloc(size);\
-										if(ptr==NULL){\
-											fprintf(stderr,\
-												"error: %s:%u could not allocate space for %s\n\n",\
-												__FILE__, __LINE__, #ptr);\
-											return NULL;\
-										}\
-									}while(0)
+#define assert_malloc(ptr) 	do{\
+								if(ptr==NULL){\
+									fprintf(stderr,\
+										"error: %s:%u could not allocate space for %s\n\n",\
+										__FILE__, __LINE__, #ptr);\
+									return NULL;\
+								}\
+						 	}while(0)
 
 #define INPUT_LAYER 0
 #define HIDDEN_START 1
@@ -45,31 +44,30 @@ ANNetwork* ANN_Create(unsigned int n_layers, unsigned int *n_neurons, real_num l
 {
 	assert( ((int)n_layers) >= 2);
 
-	ANNetwork *ann;
-	malloc_nfail(ann, sizeof(ANNetwork));
+	ANNetwork *ann = malloc(sizeof(ANNetwork));
+	assert_malloc(ann);
 
 #ifdef VERBOSE
 	printf("\n\tallocated ann\n");
 #endif
 
-	// assign the number of layers, learning rate and momentum constant of the neural network
 	ann->n_layers = n_layers;
-	ann->learn_rate = learn_rate;
-	ann->momentum = momentum;
-
-	// allocate and assign the number of neurons in each layer
-	malloc_nfail(ann->n_neurons, sizeof(*n_neurons) * n_layers);
+	ann->n_neurons = malloc(sizeof(*n_neurons) * n_layers);
+	assert_malloc(ann->n_neurons);
 	memcpy(ann->n_neurons, n_neurons, sizeof(*n_neurons) * n_layers);
 
 #ifdef VERBOSE
 	printf("\tset up n_layers and n_neurons 1d\n");
 #endif
 
-	// allocate the first dimension of the vectors associated with the neural network
-	malloc_nfail(ann->theta, sizeof(real_num*) * n_layers);
-	malloc_nfail(ann->weights, sizeof(real_num**) * n_layers);
-	malloc_nfail(ann->outputs, sizeof(real_num*) * n_layers);
-	malloc_nfail(ann->errors, sizeof(real_num*) * n_layers);
+	ann->theta = malloc(sizeof(real_num*) * n_layers);
+	assert_malloc(ann->theta);
+	ann->outputs = malloc(sizeof(real_num*) * n_layers);
+	assert_malloc(ann->outputs);
+	ann->errors = malloc(sizeof(real_num*) * n_layers);
+	assert_malloc(ann->errors);
+	ann->weights = malloc(sizeof(real_num**) * n_layers);
+	assert_malloc(ann->weights);
 
 #ifdef VERBOSE
 	printf("\tset up theta, error, output, and weights 1d\n");
@@ -77,25 +75,36 @@ ANNetwork* ANN_Create(unsigned int n_layers, unsigned int *n_neurons, real_num l
 
 	ann->theta[INPUT_LAYER] = NULL;
 	ann->errors[INPUT_LAYER] = NULL;
-	malloc_nfail(ann->outputs[INPUT_LAYER], sizeof(real_num) * n_neurons[INPUT_LAYER]);
+	ann->outputs[INPUT_LAYER] = malloc(sizeof(real_num) * n_neurons[INPUT_LAYER]);
+	assert_malloc(ann->outputs);
 	ann->weights[INPUT_LAYER] = NULL;
-
 	int layer, neuron;
 	for (layer = HIDDEN_START; layer < n_layers; layer++)
 	{
-		malloc_nfail(ann->theta[layer], sizeof(real_num) * n_neurons[layer]);
-		malloc_nfail(ann->weights[layer], sizeof(real_num*) * n_neurons[layer - 1]);
-		malloc_nfail(ann->errors[layer], sizeof(real_num) * n_neurons[layer]);
-		malloc_nfail(ann->outputs[layer], sizeof(real_num) * n_neurons[layer]);
+		ann->theta[layer] = malloc(sizeof(real_num) * n_neurons[layer]);
+		assert_malloc(ann->theta[layer]);
+		ann->errors[layer] = malloc(sizeof(real_num) * n_neurons[layer]);
+		assert_malloc(ann->errors[layer]);
+		ann->outputs[layer] = malloc(sizeof(real_num) * n_neurons[layer]);
+		assert_malloc(ann->outputs[layer]);
 
+		ann->weights[layer] = malloc(sizeof(real_num*) * n_neurons[layer-1]);
+		assert_malloc(ann->weights[layer]);
 		for (neuron = 0; neuron < n_neurons[layer-1]; neuron++)
 		{
-			malloc_nfail(ann->weights[layer][neuron], sizeof(real_num) * n_neurons[layer]);
+			ann->weights[layer][neuron] = malloc(sizeof(real_num) * n_neurons[layer]);
+			assert_malloc(ann->weights[layer][neuron]);
 		}
 	}
 
 #ifdef VERBOSE
 	printf("\tfinished setting up theta and weights\n");
+#endif
+
+	ann->learn_rate = learn_rate;
+	ann->momentum = momentum;
+
+#ifdef VERBOSE
 	printf("\tdone creating the ANN\n\n");
 #endif
 
@@ -170,8 +179,9 @@ ANNetwork* ANN_Load(char *filename)
 	// read in the number of layers, learning rate and momentum constant
 	fscanf(fin, "%u " REAL_NUM_FORMAT " " REAL_NUM_FORMAT, &n_layers, &learn_rate, &momentum);
 
-	// read the number of neurons in each layer
 	unsigned int n_neurons[n_layers];
+	// read the number of neurons in each layer
+	assert_malloc(n_neurons);
 	int layer;
 	for (layer = 0; layer < n_layers; layer++)
 		fscanf(fin, "%u", n_neurons + layer);
@@ -419,7 +429,6 @@ int ANN_TrainFile(ANNetwork *ann, char *filename)
 		return -1;
 	}
 	
-	// load the inputs and answers
 	int training_set, neuron;
 	for (training_set = 0; training_set < set.n_training_sets; training_set++)
 	{
@@ -458,14 +467,12 @@ int ANN_Train(ANNetwork *ann, TrainingSet set)
 	real_num sumSqrErrors;
 	for (epoch = 0; epoch < set.max_epoch; epoch++)
 	{
-		// learn each training set and sum the square of the errors
 		sumSqrErrors = 0;
 		for (training_set = 0; training_set < set.n_training_sets; training_set++)
 		{
 			sumSqrErrors += ANN_Learn(ann, set.inputs[training_set], set.answers[training_set]);
 		}
 		
-		// check if we have achieved an error below our desired error
 		if ( sumSqrErrors <= set.desired_error )
 			return epoch;
 	}
@@ -573,7 +580,6 @@ static real_num _PropogateErrors(ANNetwork *ann, real_num answers[])
 
 static int _AllocateSetVectors(TrainingSet *set, int n_input, int n_answer)
 {
-	// allocate the first dimension of the input and answer vectors
 	set->inputs = malloc(sizeof(real_num*) * set->n_training_sets);
 	if ( set->inputs == NULL )
 	{
@@ -587,7 +593,6 @@ static int _AllocateSetVectors(TrainingSet *set, int n_input, int n_answer)
 		return 1;
 	}
 
-	// allocate the second dimension of the input and answer vectors
 	int malloc_error = 0;
 	int training_set;
 	for (training_set = 0; training_set < set->n_training_sets; training_set++)
