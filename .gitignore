@@ -1,0 +1,10 @@
+# ignore temp files vim generates
+*[~,.swp]
+
+# ignore objects and binaries
+*.o
+num
+num.exe
+xor
+xor.exe
+
