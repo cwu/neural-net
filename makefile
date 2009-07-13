@@ -18,4 +18,4 @@ annetwork.o: annetwork.h real_num.h
 real_num.o: real_num.h
 
 clean:
-	rm *.o
+	rm -f *.o num num.exe xor xor.exe
