@@ -75,7 +75,7 @@ int main()
 				display_num(num, pattern, answers[num]);
 				printf("\n========================= Results =========================\n\n");
 				printf("------------------ 0 - 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9 -\n");
-				printf("neural network -> ", num);
+				printf("neural network -> ");
 				for (i = 0; i < 10; i++)
 					printf("%3.1f ", output[i]);
 				printf("\n\n========================= End =============================\n");
