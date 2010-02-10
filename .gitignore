@@ -1,5 +1,4 @@
 # ignore temp files vim generates
-*[~,\.swp]
 *~
 *.swp
 

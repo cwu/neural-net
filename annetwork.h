@@ -31,19 +31,5 @@ int ANN_Train(ANNetwork *ann, TrainingSet set);
 
 void ANN_Print(ANNetwork *ann);
 
-/*
-int ANN_Train
-
-void feedForward(NeuralNetwork * network, double input[]);
-double propogateErrors(NeuralNetwork * n, double answers[]);
-double limiter(double x);
-double learn(NeuralNetwork * network, double input[], double answer[]);
-int train(NeuralNetwork * dumb, double inputs[][MAX_N_IN_LAYER], double answers[][MAX_N_IN_LAYER],
-			 int nTrainingSets, double accuracyThreshold, int epochLimit);
-void printNetwork(NeuralNetwork * network);
-double sse(NeuralNetwork * network, double inputs[][MAX_N_IN_LAYER], double answers[][MAX_N_IN_LAYER],
-				int nTrainingSets);
-*/
-
 #endif
 
