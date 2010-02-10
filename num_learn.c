@@ -31,7 +31,10 @@ int main()
 	ANN_FillRandom(ann);
 
 	// train the neural network
+	printf("Training Neural Network...");
+	fflush(stdout); // force the buffer to print
 	int epoch = ANN_TrainFile(ann, "num_training_set.txt");
+	printf("Done\n\n");
 
 	// display the results of the training
 	printf("epoch : %d\n\n", epoch);
@@ -45,7 +48,7 @@ int main()
 		for (i = 0; i < 10; i++)
 			printf("%3.1f ", output[i]);
 
-		printf("...%s\n", correct(num, output, answers) ? "PASS" : "FAIL");
+		printf("... %s\n", correct(num, output, answers) ? "PASS" : "FAIL");
 	}
 
 	printf("\n");

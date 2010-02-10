@@ -397,7 +397,6 @@ void ANN_FeedForward(ANNetwork *ann, real_num input[], real_num output[])
 	memcpy(output, ann->outputs[ann->n_layers - 1], sizeof(real_num) * ann->n_neurons[ann->n_layers-1]);
 }
 
-#define assert_null_and_free
 int ANN_TrainFile(ANNetwork *ann, char *filename)
 {
 	FILE *fin = fopen(filename, "r");
@@ -423,7 +422,7 @@ int ANN_TrainFile(ANNetwork *ann, char *filename)
 	{
 #ifdef VERBOSE
 		printf("malloc_error could not allocate input and answers vectors for training from a"
-				"file...needed %lu bytes\n", sizeof(real_num) * set.n_training_sets * 
+				"file...needed %u bytes\n", sizeof(real_num) * set.n_training_sets * 
 				(n_input + n_answers + 2 ));
 #endif
 		return -1;
@@ -473,8 +472,9 @@ int ANN_Train(ANNetwork *ann, TrainingSet set)
 			sumSqrErrors += ANN_Learn(ann, set.inputs[training_set], set.answers[training_set]);
 		}
 		
-		if ( sumSqrErrors <= set.desired_error )
+		if ( sumSqrErrors <= set.desired_error ) {
 			return epoch;
+		}
 	}
 
 	return epoch;

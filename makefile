@@ -3,6 +3,8 @@ DEFINE = -DVERBOSE
 CFLAGS = -Wall $(DEFINE) -g
 ANN_OBJ = annetwork.o real_num.o
 
+all: num xor
+
 num: num_learn.o $(ANN_OBJ)
 	gcc $(CFLAGS) num_learn.o $(ANN_OBJ) -o num -lm
 
