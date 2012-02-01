@@ -69,7 +69,6 @@ train net inputs answers learnRate epoch =
 netOut :: NeuralNet -> [Real'] -> [Real']
 netOut net input = foldl' (flip layerOut) input net
 
-
 --------------------------------------------------------------------------------
 -- trace (show smarter ++ "\nerr: " ++ show sumSqrErrs ++ "  | epoch: " ++ show x ++ "\n\n") $
 -- traincycle dumb learningRate = foldl ((\f a x (y,z)-> f x y z a) learn learningRate) dumb (zip input out)

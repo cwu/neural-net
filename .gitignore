@@ -8,4 +8,7 @@ num
 num.exe
 xor
 xor.exe
+bpo
 
+# ignore  haskell intermediate files
+*.hi
