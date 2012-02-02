@@ -12,3 +12,9 @@ bpo
 
 # ignore  haskell intermediate files
 *.hi
+
+# haskell profiling
+*.aux
+*.hp
+*.prof
+*.ps

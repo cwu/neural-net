@@ -11,34 +11,32 @@ sigmoid x = 1 / (1 + 2.7182 ** (-x))
 layerOut :: Layer -> [Real'] -> [Real']
 layerOut (Layer neurons theta) input =
   let
-    activate (i,w) = map (i*) w
+    activate  i w  = map (i*) w
     neuronThresholds = map ((-1)*) theta
-    neuronOutputs = zipWith (curry activate) input neurons
+    neuronOutputs = zipWith activate input neurons
     stimulus = foldl' (zipWith (+)) neuronThresholds neuronOutputs
   in map sigmoid stimulus
 
+--call with acc = (Nil, input)
+calcOutputs :: NeuralNet -> [(Layer, [Real'])] -> [(Layer, [Real'])]
+calcOutputs [] acc = acc
+calcOutputs (l:ls) acc@((_,i):_) = seq acc $ calcOutputs ls ((l, output) : acc)
+  where output = layerOut l i
+
+adjustWeights :: Real' -> [Real'] -> Real' -> [Real'] -> [Real']
+adjustWeights learnRate errorGradient i w = zipWith (\w g -> w + learnRate * i * g) w errorGradient
+
+improve :: Real' -> Layer -> [Real'] -> [Real'] -> [Real'] -> (Layer, [Real'])
+improve learnRate (Layer w t) i y e = (Layer w' t', e')
+  where
+    g = zipWith (\y e -> y * (1 - y) * e) y e
+    w' = zipWith (adjustWeights learnRate g) i w
+    t' = adjustWeights learnRate g (-1) t
+    e' = map (sum . zipWith (*) g) w
+
 learn :: Real' -> NeuralNet -> [Real'] -> [Real'] -> NeuralNet
-learn learnRate net input answer =
-  let
-    adjustWeights :: [Real'] -> Real' -> [Real'] -> [Real']
-    adjustWeights errorGradient i w =
-      zipWith (\w g -> w + learnRate * i * g) w errorGradient
-
-    --call with acc = (Nil, input)
-    calcOutputs :: NeuralNet -> [(Layer, [Real'])] -> [(Layer, [Real'])]
-    calcOutputs [] acc = acc
-    calcOutputs (l:ls) acc@((_,i):_) = seq acc $ calcOutputs ls ((l, output) : acc)
-                    where output = layerOut l i
-
-    improve :: Layer -> [Real'] -> [Real'] -> [Real'] -> (Layer, [Real'])
-    improve (Layer w t) i y e =
-      let
-        g = zipWith (\y e -> y * (1 - y) * e) y e
-        w' = zipWith (adjustWeights g) i w
-        t' = adjustWeights g (-1) t
-        e' = map (sum . zipWith (*) g) w
-      in (Layer w' t', e')
-
+learn learnRate net input answer = adjust $ calcOutputs net [(Nil, input)]
+  where
     -- note must be used on calcOutput starting acc with (Nil, input)
     adjust :: [(Layer, [Real'])] -> NeuralNet
     adjust ((l0,y0):xs@((_, i0):_)) =
@@ -46,23 +44,21 @@ learn learnRate net input answer =
         adjust' :: [(Layer, [Real'])] -> [Real'] -> NeuralNet -> NeuralNet
         adjust' ((Nil,_):_) _ acc = acc
         adjust' ((l,y):xs@((_,i):_)) e acc = seq acc $ adjust' xs e' (l':acc)
-          where (l', e') = improve l i y e
+          where (l', e') = improve learnRate l i y e
 
         e0 = zipWith (-) answer y0
-        (l0', e1) = improve l0 i0 y0 e0
+        (l0', e1) = improve learnRate l0 i0 y0 e0
       in adjust' xs e1 [l0']
 
-  in adjust $ calcOutputs net [(Nil, input)]
-
 train :: NeuralNet -> [[Real']] -> [[Real']] -> Real' -> Int -> (NeuralNet, Int)
-train net inputs answers learnRate epoch =
-  let
-    smarter = foldl' ((\f x (y,z) -> f x y z) $ learn learnRate) net (zip inputs answers)
+train net inputs answers learnRate epoch
+  | sumSqrErrs > 0.001 = train smarter inputs answers learnRate (epoch+1)
+  | otherwise          = (smarter, epoch)
+  where
+    smarter = foldl' ((\f x -> uncurry (f x)) $ learn learnRate) net (zip inputs answers)
     --ineffecient error finding
     errors = [zipWith (-) (netOut smarter i) a | (i,a) <- zip inputs answers]
     sumSqrErrs = (sum . map (sum . map (^ 2))) errors
-  in if sumSqrErrs > 0.001 then train smarter inputs answers learnRate (epoch+1)
-    else (smarter, epoch)
 
 -- 56395
 
